@@ -15,8 +15,12 @@ static uint32_t WildcardableOperandTypeBitmask =
     BIT( o_reg ) | BIT( o_mem ) | BIT( o_phrase ) | BIT( o_displ ) | BIT( o_far ) | BIT( o_near ) | BIT( o_imm ) |
     BIT( o_idpspec0 ) | BIT( o_idpspec1 ) | BIT( o_idpspec2 ) | BIT( o_idpspec3 ) | BIT( o_idpspec4 ) | BIT( o_idpspec5 );
 
+
 static bool IsARM( ) {
-    return std::string_view( "ARM" ) == inf.procname;
+    char buf[QMAXFILE + 1] = { 0 };
+    const char* procname = get_idp_name(buf, sizeof(buf));
+    // Shady..?
+    return std::string_view( "ARM" ) == procname;
 }
 
 static bool GetOperandOffsetARM( const insn_t& instruction, uint8_t* operandOffset, uint8_t* operandLength ) {
@@ -87,6 +91,8 @@ static bool GetOperandOffset( const insn_t& instruction, uint8_t* operandOffset,
 static std::vector<uint8_t> ReadSegmentsToBuffer( ) {
     std::vector<uint8_t> buffer;
 
+    auto min_ea = inf_get_min_ea();
+
     // Iterate over all segments
     for( int i = 0; i < get_segm_qty( ); ++i ) {
         auto seg = getnseg( i );
@@ -94,7 +100,7 @@ static std::vector<uint8_t> ReadSegmentsToBuffer( ) {
             continue;
         }
 
-        auto ea = buffer.empty( ) ? inf.min_ea : seg->start_ea;
+        auto ea = buffer.empty( ) ? min_ea : seg->start_ea;
         size_t size = seg->end_ea - ea;
 
         // Resize the buffer to accommodate the segment data
@@ -144,7 +150,7 @@ static std::vector<ea_t> FindSignatureOccurencesQis( std::string_view idaSignatu
 
         auto fileOffset = ( ( currentPtr - FILE_BUFFER.data( ) ) + occurence );
 
-        results.push_back( inf.min_ea + fileOffset );
+        results.push_back(inf_get_min_ea() + fileOffset );
 
         currentPtr = FILE_BUFFER.data( ) + fileOffset + 1;
     }
@@ -159,16 +165,17 @@ static std::vector<ea_t> FindSignatureOccurences( std::string_view idaSignature,
 
     // Convert signature string to searchable struct
     compiled_binpat_vec_t binaryPattern;
-    parse_binpat_str( &binaryPattern, inf.min_ea, idaSignature.data( ), 16 );
+    parse_binpat_str( &binaryPattern, inf_get_min_ea(), idaSignature.data( ), 16 );
 
     // Search for occurences
     std::vector<ea_t> results;
-    auto ea = inf.min_ea;
+    auto ea = inf_get_min_ea();
     while( true ) {
-        auto occurence = bin_search2( ea, inf.max_ea, binaryPattern, BIN_SEARCH_NOCASE | BIN_SEARCH_FORWARD );
+        size_t out_matched_idx = 0;
+        auto occurrence = bin_search( ea, inf_get_max_ea(), binaryPattern, BIN_SEARCH_NOCASE | BIN_SEARCH_FORWARD, &out_matched_idx );
 
         // Signature not found anymore
-        if( occurence == BADADDR ) {
+        if(occurrence == BADADDR ) {
             break;
         }
 
@@ -177,9 +184,9 @@ static std::vector<ea_t> FindSignatureOccurences( std::string_view idaSignature,
             break;
         }
 
-        results.push_back( occurence );
+        results.push_back( occurrence );
 
-        ea = occurence + 1;
+        ea = occurrence + 1;
     }
     return results;
 }

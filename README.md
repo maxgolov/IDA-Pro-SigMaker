@@ -1,12 +1,15 @@
-# IDA Pro SigMaker
-Signature Maker Plugin for IDA Pro 8 and 9
+# IDA SigMaker
 
-Plugin downloads are in the [Releases](https://github.com/A200K/IDA-Pro-SigMaker/releases/) section
+Fork of Signature Maker Plugin for IDA Free 9. Tested on Win-x64 only.
+
+## Requirements
+
+Place Ida v9 SDK to `C:\build\IDA\idasdk90`.
 
 ## Installation
 Drop into plugins folder of your IDA installation.
 
-`%AppData%\Hex-Rays\IDA Pro\plugins`
+`%AppData%\Hex-Rays\IDA Free\plugins` or `C:\Program Files\IDA Free 9.0\plugins`
 
 ## Usage
 In disassembly view, select a line you want to generate a signature for, and press 
@@ -47,27 +50,25 @@ Match(es) of your signature will be printed to console:
 ![](https://i.imgur.com/Pe4REkX.png)
 
 ___
+
 ### Other
-This plugin uses qis's AVX2-optimized signature searching library: https://github.com/qis/signature
+
+This plugin uses qis's AVX2-optimized signature searching library: https://github.com/qis/signature - isincluded as git submodule in the root folder.
 
 If the CPU doesn't support AVX2, it will fallback to the slow builtin IDA functions.
 
-___
-## Building
-
-If you want to compile for IDA 9, check out the [IDA9 branch](https://github.com/A200K/IDA-Pro-SigMaker/tree/IDA9)
 
 ### Requirements
-- IDA Pro Plugin SDK 8 / 9
+- IDA Free Plugin SDK 9
 
 ### Setup
 For your convenience, here are the steps to get started:
 ```git
-git clone git@github.com:A200K/IDA-Pro-SigMaker.git
+git clone git@github.com:maxgolov/IDA-Pro-SigMaker.git
 cd IDA-Pro-SigMaker/
 git submodule init
 git submodule update
 ```
 Then, 
-- drop the IDA SDK into the according ```SDK/8``` or ```SDK/9``` path
+- drop the IDA SDK to `C:\build\IDA\idasdk90`
 - open the project with Visual Studio
